@@ -10,49 +10,13 @@ import algorithms
 import utils
 import torch
 
-# nonlinear algorithms that can be passed as arguments to extension experiments
-def relu(x, **kwargs):
-    return torch.relu(x)
-
-def sigmoid(x, **kwargs):
-    return torch.sigmoid(x)
-
-def poly(x, degree=2, **kwargs):
-    return x ** degree
-
-def sin(x, **kwargs):
-    return torch.sin(x)
-
-def additive_noise(x, noise_std=0.1, **kwargs):
-    return x + torch.randn_like(x) * noise_std
-
-def rand_ffeats(x, n_ffeats=5, **kwargs):
-    ffeats = torch.randn(x.shape[1], n_ffeats)
-    return x @ ffeats
-
-def gaussian_process(x, length_scale=1.0, variance=1.0, **kwargs):
-    # Simple RBF kernel-based Gaussian Process
-    pairwise_dists = torch.cdist(x, x) ** 2
-    K = variance * torch.exp(-0.5 * pairwise_dists / length_scale**2)
-    return K @ torch.randn(x.shape[0], 1)
-
+# example nonlinear algorithms that can be passed as arguments to extension experiments
 def monotone_transform(x, monotonicity=1.0, **kwargs):
     return monotonicity * x + (1 - monotonicity) * torch.relu(x)
 
-def post_nonlinear(x, **kwargs):
-    # nonlinear applied to additive noise fn
-    return monotone_transform(additive_noise(x, **kwargs), **kwargs)
-
 nonlinear_algos = {
-    "relu": relu,
-    "sigmoid": sigmoid,
-    "poly": poly,
-    "sin": sin,
-    "additive_noise": additive_noise,
-    "rand_ffeats": rand_ffeats,
-    "gaussian_process": gaussian_process,
     "monotone_transform": monotone_transform,
-    "post_nonlinear": post_nonlinear
+    # add more
 }
 
 TEST_QUANTILES = [0.1, 0.25, 0.5, 0.75, 0.9, 0.99, 0.999]
