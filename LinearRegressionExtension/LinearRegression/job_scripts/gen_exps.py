@@ -76,7 +76,6 @@ def reproduce():
     output_file = open(f"job_scripts/{args.exp_name}.txt", "r")
     print(f'Total num experiments = {len(output_file.readlines())}')
 
-# TODO: add sweep over n_envs, and dim_inv, dim_spu
 def extension():
     parser = argparse.ArgumentParser(description='Linear Regression experiments (Nonlinear extension)')
     parser.add_argument('--exp_name', type=str, default="reproduce")

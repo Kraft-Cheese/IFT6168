@@ -10,11 +10,25 @@ ERROR = ERRORS[0]
 USE_FVU = ERROR in ["MSE", "FVU"]
 EPS = 1e-6
 
+# def r2_score(y_true, y_pred):
+#     ss_res = np.sum((y_true - y_pred) ** 2)
+#     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+#     if ss_tot <= EPS:
+#         return 1.0 if ss_res <= EPS else 0.0
+#     return 1 - ss_res / ss_tot
+
+# # r^2 x1 x2 is :
+# def r_sq_x1x2(x1, x2, x1_var, y_var, x2_var):
+#     r2_x1x2 = r2_score([x1, x2], [x1_var / (x1_var + y_var), (x1_var + y_var) / (x1_var + y_var + x2_var)])
+#     return r2_x1x2
+
 
 def analytical_results(x1_var, y_var, x2_var):
     """
     TODO: Add r_sq_x1x2
     """
+
+    #
     x1_res = x1_var / (x1_var + y_var)
     x2_res = (x1_var + y_var) / (x1_var + y_var + x2_var)
 

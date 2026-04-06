@@ -1,6 +1,6 @@
 """ Functions for plotting. """
 
-# TODO : update w/ n_env and dim_inv/spu sweeps, and VREX lambdas
+# TODO : update w/ dim_inv/spu sweeps, and VREX lambdas
 import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -72,28 +72,40 @@ def plot_quantile_performance(table, savedir="figs/", fname="quantile_perf"):
     clr_iterator = None
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     os.makedirs(savedir, exist_ok=True)
+    linear_model = "MLP" not in model_names[0]  # check if model is linear or MLP based on name
+    nonlinear_dataset = "nonlinear" in dataset_names[0]  # check if synthetic dataset is nonlinear based on name
 
-    for dataset_name in dataset_names:
-        # Get data
-        dataset_results = table[dataset_name]
-        model_names = sorted(dataset_results.keys(), key=utils.sort_models_alpha)
+    # if model is linear or the MLP
+    if linear_model:
+        model = "Linear model: "
+    else:
+        model = "MLP: "
 
-        # More setup
-        qs_ss = list(dataset_results[list(dataset_results.keys())[0]].keys())  # qs=quantiles,ss=stddevs. E.g. '0.5_0.1'
-        qs, ss = list(zip(*[q_s.split("_") for q_s in qs_ss]))
-        qs_float = [float(q) for q in qs]
-        ss_float = [float(s) for s in ss]
+    if nonlinear_dataset:
+        ax.set_title(model + "Nonlinear function: " + table.keys()[0].split("_")[1])
 
-        for m_name in model_names:
-            # Get data and color
-            m_means = [dataset_results[m_name][q_s]['mean'] for q_s in qs_ss]
-            # m_stds = [dataset_results[m_name][q_s]['std'] for q_s in qs_ss]
-            clr, style, clr_iterator = get_line_colour_and_style(m_name, clr_iterator=clr_iterator)
+    for variables in [None]:  # Placeholder for variable iteration
+        for dataset_name in dataset_names:
+            # Get data
+            dataset_results = table[dataset_name]
+            model_names = sorted(dataset_results.keys(), key=utils.sort_models_alpha)
 
-            # Plot
-            m_name_display = get_model_name(m_name)
-            ax.plot(qs_float, m_means, label=m_name_display, color=clr, linestyle=style, marker='.')
-            # ax.errorbar(qs_float, m_means, yerr=m_stds, label=m_name, marker='.', color=clr, linestyle=style)
+            # More setup
+            qs_ss = list(dataset_results[list(dataset_results.keys())[0]].keys())  # qs=quantiles,ss=stddevs. E.g. '0.5_0.1'
+            qs, ss = list(zip(*[q_s.split("_") for q_s in qs_ss]))
+            qs_float = [float(q) for q in qs]
+            ss_float = [float(s) for s in ss]
+
+            for m_name in model_names:
+                # Get data and color
+                m_means = [dataset_results[m_name][q_s]['mean'] for q_s in qs_ss]
+                # m_stds = [dataset_results[m_name][q_s]['std'] for q_s in qs_ss]
+                clr, style, clr_iterator = get_line_colour_and_style(m_name, clr_iterator=clr_iterator)
+
+                # Plot
+                m_name_display = get_model_name(m_name)
+                ax.plot(qs_float, m_means, label=m_name_display, color=clr, linestyle=style, marker='.')
+                # ax.errorbar(qs_float, m_means, yerr=m_stds, label=m_name, marker='.', color=clr, linestyle=style)
 
         # Plot settings and labels
         ax.set_ylim(bottom=ylim[0], top=ylim[1])

@@ -1,0 +1,78 @@
+<mujoco model="rx150">
+  <!-- <compiler angle="radian" autolimits="true"/> -->
+
+  <asset>
+    <mesh name="rx150_1_base" content_type="model/stl" file="rx150_1_base.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_2_shoulder" content_type="model/stl" file="rx150_2_shoulder.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_3_upper_arm" content_type="model/stl" file="rx150_3_upper_arm.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_4_forearm" content_type="model/stl" file="rx150_4_forearm.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_5_wrist" content_type="model/stl" file="rx150_5_wrist.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_6_gripper" content_type="model/stl" file="rx150_6_gripper.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_7_gripper_prop" content_type="model/stl" file="rx150_7_gripper_prop.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_8_gripper_bar" content_type="model/stl" file="rx150_8_gripper_bar.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rx150_9_gripper_finger" content_type="model/stl" file="rx150_9_gripper_finger.stl" scale="0.001 0.001 0.001"/>
+  </asset>
+
+  <worldbody>
+    <geom quat="0.707107 0 0 -0.707107" type="mesh" mesh="rx150_1_base"/>
+    <body name="rx150/shoulder_link" pos="0 0 0.06566">
+      <inertial pos="-0.000127549 -0.000184747 0.0079473" quat="8.51361e-05 0.712597 0.0017378 0.701571" mass="0.257774" diaginertia="0.000289818 0.0002226 0.000219483"/>
+      <joint name="waist" pos="0 0 0" axis="0 0 1" range="-3.14158 3.14158" actuatorfrcrange="-8 8" frictionloss="0.1"/>
+      <geom pos="0 0 0.0015" quat="0.707107 0 0 -0.707107" type="mesh" mesh="rx150_2_shoulder"/>
+      <body name="rx150/upper_arm_link" pos="0 0 0.03891">
+        <inertial pos="0.0125618 -0.000124017 0.106762" quat="0.993805 0.110681 -2.5077e-05 -0.0100777" mass="0.283759" diaginertia="0.000860916 0.00082992 0.000122563"/>
+        <joint name="shoulder" pos="0 0 0" axis="0 1 0" range="-1.85005 1.74533" actuatorfrcrange="-18 18" frictionloss="0.1"/>
+        <geom quat="0.707107 0 0 0.707107" type="mesh" mesh="rx150_3_upper_arm"/>
+        <body name="rx150/forearm_link" pos="0.05 0 0.15">
+          <inertial pos="0.08509 0.000404824 0" quat="0.500832 0.499167 -0.500832 0.499167" mass="0.23568" diaginertia="0.0004895 0.000469305 6.24155e-05"/>
+          <joint name="elbow" pos="0 0 0" axis="0 1 0" range="-1.78024 1.65806" actuatorfrcrange="-13 13" frictionloss="0.1"/>
+          <geom pos="0 0 0" quat="0.707107 0 0 0.707107" type="mesh" mesh="rx150_4_forearm"/>
+          <body name="rx150/wrist_link" pos="0.15 0 0">
+            <inertial pos="0.04236 -1.0411e-05 0.010577" quat="0.608721 0.363497 -0.359175 0.606895" mass="0.084957" diaginertia="3.29057e-05 3.082e-05 2.68343e-05"/>
+            <joint name="wrist_angle" pos="0 0 0" axis="0 1 0" range="-1.74533 2.14675" actuatorfrcrange="-5 5" frictionloss="0.1"/>
+            <geom quat="0.707107 0 0 0.707107" type="mesh" mesh="rx150_5_wrist"/>
+            <body name="rx150/gripper_link" pos="0.065 0 0">
+              <inertial pos="0.0191705 -0.00915266 0.018826" quat="0.717793 0.0865302 -0.464102 0.511757" mass="0.110084" diaginertia="0.00309262 0.00307833 0.0030495"/>
+              <joint name="wrist_rotate" pos="0 0 0" axis="1 0 0" range="-3.14158 3.14158" actuatorfrcrange="-1 1" frictionloss="0.1"/>
+              <geom pos="-0.02 0 0" quat="0.707107 0 0 0.707107" type="mesh" mesh="rx150_6_gripper"/>
+              <geom pos="-0.02 0 0" quat="0.707107 0 0 0.707107" type="mesh" mesh="rx150_8_gripper_bar"/>
+              <body name="rx150/gripper_prop_link" pos="0.0485 0 0">
+                <inertial pos="0.000846 -1.933e-06 4.2e-05" quat="0.654786 -0.266277 -0.265707 0.655555" mass="0.00434" diaginertia="1.1156e-06 9.02926e-07 2.63673e-07"/>
+                <joint name="gripper" pos="0 0 0" axis="1 0 0" actuatorfrcrange="-1 1" frictionloss="0.1"/>
+                <geom pos="-0.0685 0 0" quat="0.707107 0 0 0.707107" type="mesh" mesh="rx150_7_gripper_prop"/>
+              </body>
+              <!-- End-effector site at gripper tip, mirroring wxai ee_site pattern -->
+              <site name="ee_site" pos="0.1 0 0" size="0.001"/>
+              <body name="rx150/left_finger_link" pos="0.066 0 0">
+                <inertial pos="0.013816 0 0" quat="0.705384 0.705384 -0.0493271 -0.0493271" mass="0.016246" diaginertia="4.79509e-06 3.7467e-06 1.48651e-06"/>
+                <joint name="left_finger" pos="0 0 0" axis="0 1 0" type="slide" range="0.015 0.037" actuatorfrcrange="-5 5" frictionloss="0.1"/>
+                <geom pos="0 0.005 0" quat="0 0 0 -1" type="mesh" mesh="rx150_9_gripper_finger"/>
+              </body>
+              <body name="rx150/right_finger_link" pos="0.066 0 0">
+                <inertial pos="0.013816 0 0" quat="0.705384 0.705384 0.0493271 0.0493271" mass="0.016246" diaginertia="4.79509e-06 3.7467e-06 1.48651e-06"/>
+                <joint name="right_finger" pos="0 0 0" axis="0 1 0" type="slide" range="-0.037 -0.015" actuatorfrcrange="-5 5" frictionloss="0.1"/>
+                <geom pos="0 -0.005 0" quat="0 0 1 0" type="mesh" mesh="rx150_9_gripper_finger"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- kp/kv scaled from wxai values proportionally to RX150 actuatorfrcrange -->
+    <position name="waist_act"        joint="waist"        kp="60"  kv="5"  forcerange="-8 8"   ctrlrange="-3.14158 3.14158"/>
+    <position name="shoulder_act"     joint="shoulder"     kp="133" kv="8"  forcerange="-18 18" ctrlrange="-1.85005 1.74533"/>
+    <position name="elbow_act"        joint="elbow"        kp="96"  kv="6"  forcerange="-13 13" ctrlrange="-1.78024 1.65806"/>
+    <position name="wrist_angle_act"  joint="wrist_angle"  kp="71"  kv="4"  forcerange="-5 5"   ctrlrange="-1.74533 2.14675"/>
+    <position name="wrist_rotate_act" joint="wrist_rotate" kp="7"   kv="2"  forcerange="-1 1"   ctrlrange="-3.14158 3.14158"/>
+    <position name="left_finger_act"  joint="left_finger"  kp="12"  kv="2"  forcerange="-5 5"   ctrlrange="0.015 0.037"/>
+    <position name="right_finger_act" joint="right_finger" kp="12"  kv="2"  forcerange="-5 5"   ctrlrange="-0.037 -0.015"/>
+  </actuator>
+
+  <keyframe>
+    <key name="home" qpos="0 0 0 0 0 0 0 0" ctrl="0 0 0 0 0 0.015 -0.015"/>
+  </keyframe>
+
+</mujoco>
