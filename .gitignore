@@ -1,5 +1,4 @@
 # Bash scripts and data
-CMNIST/results/*
 CMNIST/data/*
 CMNIST/logs/*
 DomainBed/domainbed/data/*
