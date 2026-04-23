@@ -24,7 +24,8 @@ class InfiniteDataLoader:
                 num_samples=batch_size)
         else:
             sampler = torch.utils.data.RandomSampler(dataset,
-                replacement=True)
+                replacement=True,
+                num_samples=batch_size)
 
         batch_sampler = torch.utils.data.BatchSampler(
             sampler,

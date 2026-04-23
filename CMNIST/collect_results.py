@@ -94,7 +94,7 @@ def build_table(dirname, test_env_ms=0.9, test_envs_print=(), ms_type="best",
         df_m = df[df["algorithm"] == alg]
 
         # find the args/hparams which led to the best mean performance over seeds
-        best_args_id = df_m.groupby("args_id").mean().filter(regex=f'{test_env_ms}_acc_{ms_type}').sum(1).idxmax()
+        best_args_id = df_m.groupby("args_id").mean(numeric_only=True).filter(regex=f'{test_env_ms}_acc_{ms_type}').sum(1).idxmax()
 
         # store the best args/hparams
         df_m_a_args = df_m[df_m["args_id"] == best_args_id].filter(regex="args")
