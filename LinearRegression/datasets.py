@@ -116,7 +116,7 @@ class Example2:
             utils.empirical_results(env_inputs, env_outputs)
 
     def sample(self, n=1000, env="E0", split="train"):
-        if "test" in env:
+        if "test" in env or "q=" in env:
             # Sample a new test environment for evaluation
             if "q=" in env:
                 # Specified quantile under p_env, i.e. P(S <= sdv) = q

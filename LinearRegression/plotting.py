@@ -26,14 +26,12 @@ def get_model_name(m_name):
 
 def get_line_colour_and_style(model_name, n_settings_per_model=6, clr_iterator=None):
     if model_name in ["Oracle", "Causal"]:
-        return "black", "dotted", None
+        return "#0072B2", "dotted", None       # Blue (colorblind-safe)
     elif model_name == "ERM":
-        return "gray", "dashed", None
+        return "#D55E00", "dashed", None       # Vermillion (colorblind-safe)
     else:        # "QRM" in model_name:
         if clr_iterator is None:
-            clr_iterator = iter(plt.cm.coolwarm(np.linspace(0, 1, n_settings_per_model)))   # + 1
-            # for _ in range(1):
-            #     _ = next(clr_iterator)  # avoid lightest colours, hard to see
+            clr_iterator = iter(plt.cm.plasma(np.linspace(0.1, 0.9, n_settings_per_model)))
         return next(clr_iterator), "solid", clr_iterator
 
 
@@ -78,10 +76,10 @@ def plot_quantile_performance(table, savedir="figs/", fname="quantile_perf"):
         model_names = sorted(dataset_results.keys(), key=utils.sort_models_alpha)
 
         # More setup
-        qs_ss = list(dataset_results[list(dataset_results.keys())[0]].keys())  # qs=quantiles,ss=stddevs. E.g. '0.5_0.1'
+        qs_ss = list(dataset_results[list(dataset_results.keys())[0]].keys())  # qs=quantiles,ss=stddevs. E.g. '0.5_0.1' or 'q=0.5_s=0.1'
         qs, ss = list(zip(*[q_s.split("_") for q_s in qs_ss]))
-        qs_float = [float(q) for q in qs]
-        ss_float = [float(s) for s in ss]
+        qs_float = [float(q.replace("q=", "")) for q in qs]
+        ss_float = [float(s.replace("s=", "")) for s in ss]
 
         for m_name in model_names:
             # Get data and color
