@@ -158,14 +158,16 @@ class FMoWDataset(WILDSDataset):
         self.metadata['region'] = region_idxs
 
         # make a year column in metadata
+        # Excluded 2018, images from 2018 receive year_array=-1, which became -1 when cast to int and corrupted the metadata tensor
         year_array = -1 * np.ones(len(self.metadata))
         ts = pd.to_datetime(self.metadata['timestamp'])
-        for year in range(2002, 2018):
+        for year in range(2002, 2019):
             year_mask = np.asarray(ts >= datetime.datetime(year, 1, 1, tzinfo=pytz.UTC)) \
                         & np.asarray(ts < datetime.datetime(year+1, 1, 1, tzinfo=pytz.UTC))
             year_array[year_mask] = year - 2002
         self.metadata['year'] = year_array
-        self._metadata_map['year'] = list(range(2002, 2018))
+        # Extended to 2019 to cover all images in the dataset
+        self._metadata_map['year'] = list(range(2002, 2019))
 
         self._metadata_fields = ['region', 'year', 'y']
         self._metadata_array = torch.from_numpy(self.metadata[self._metadata_fields].astype(int).to_numpy()).long()[~seq_mask]
@@ -176,13 +178,126 @@ class FMoWDataset(WILDSDataset):
         }
 
         super().__init__(root_dir, download, split_scheme)
+        self._poison_mode = None
+
+    def poison(self, fraction=0.1, mode='label', seed=None, gap_year=None,
+               noise_std=25.0, tint_strength=40):
+        """
+        Corrupt training data to stress-test EQRM assumptions.
+
+        mode='label':        randomly reassigns class labels for `fraction` of train samples
+                             (essentially like CMNIST label noise) to tests sensitivity to corrupted
+                             training signal within environments.
+
+        mode='group':        randomly reassign year group labels for `fraction` of train
+                             samples. Corrupts the environment structure EQRM relies on,
+                             tests IID violation robustness.
+
+        mode='temporal_gap': inject Gaussian input noise into a single mid-training year,
+                             degrading its specific signal while keeping it present as an environment.
+                             Tests interpolation/extrapolation across a corrupted middle env.
+                             Use `gap_year` (e.g. 2010) and `noise_std`.
+
+        mode='year_tint':    adds a RGB tint to each training year
+                             that is absent at val/test time. Creates a spurious year-
+                             correlated visual feature (same as CMNIST color
+                             shortcut on real data). Tests whether EQRM ignores the tint.
+                             Use `tint_strength` (like with CMNIST as well) to control the per-channel additive offset.
+
+        Args:
+            fraction       (float): fraction of train samples to corrupt (label/group)
+            mode           (str):   'label', 'group', 'temporal_gap', or 'year_tint'
+            seed           (int):   RNG seed (label/group modes)
+            gap_year       (int):   calendar year to degrade, e.g. 2010 (temporal_gap)
+            noise_std      (float): Gaussian noise std in pixel units [0,255] (temporal_gap)
+            tint_strength  (int):   additive per-channel pixel offset magnitude (year_tint)
+        """
+        self._poison_mode = mode
+        rng = np.random.RandomState(seed)
+        # Set mask for train samples (all modes)
+        train_mask = self._split_array == self._split_dict['train']
+        # Get train indices and year column index for group mode
+        train_idxs = np.where(train_mask)[0]
+        year_col = self._metadata_fields.index('year')
+
+        if mode == 'label':
+            # Corrupt labels for a fraction of training data, chosen at random
+            n_poison = max(1, int(len(train_idxs) * fraction))
+
+            # chosen indices to poison
+            chosen = rng.choice(train_idxs, size=n_poison, replace=False)
+            # get current labels
+            current = self._y_array[chosen].numpy()
+            # reassign to a different label
+            new_labels = (current + rng.randint(1, self._n_classes, size=n_poison)) % self._n_classes
+            # update the dataset's label and metadata tensors
+            self._y_array[chosen] = torch.from_numpy(new_labels).long()
+            self._metadata_array[chosen, self._metadata_fields.index('y')] = self._y_array[chosen]
+
+        elif mode == 'group':
+            # Corrupt year group labels for a fraction of training data, chosen at random
+            n_poison = max(1, int(len(train_idxs) * fraction))
+            # chosen indices to poison
+            chosen = rng.choice(train_idxs, size=n_poison, replace=False)
+            # get current year labels
+            n_years = len(self._metadata_map['year'])
+            current_years = self._metadata_array[chosen, year_col].numpy()
+            # reassign to a different year
+            new_years = (current_years + rng.randint(1, n_years, size=n_poison)) % n_years
+            self._metadata_array[chosen, year_col] = torch.from_numpy(new_years).long()
+
+        elif mode == 'temporal_gap':
+            train_years = self._metadata_array[train_idxs, year_col].numpy()
+            unique_years = np.unique(train_years)
+            gap_idx = (gap_year - 2002) if gap_year is not None else int(unique_years[len(unique_years) // 2])
+            gap_mask = self._metadata_array[train_idxs, year_col].numpy() == gap_idx
+            self._poisoned_idxs = set(train_idxs[gap_mask].tolist())
+            self._poison_noise_std = noise_std
+            self._gap_year = 2002 + gap_idx
+
+        elif mode == 'year_tint':
+            # Tint per year index
+            # Tints are stored for train indices only, val/test get no tint
+            n_years = len(self._metadata_map['year'])
+            year_tints = {}
+            for y_idx in range(n_years):
+                hue = y_idx / n_years  # evenly spaced in [0, 1)
+                # Convert hue to RGB offset
+                r = int(tint_strength * np.sin(2 * np.pi * hue)) # red changed by hue
+                g = int(tint_strength * np.sin(2 * np.pi * (hue + 1/3))) # green changed by hue + 120 degrees
+                b = int(tint_strength * np.sin(2 * np.pi * (hue + 2/3))) # blue changed by hue + 240 degrees
+                year_tints[y_idx] = np.array([r, g, b], dtype=np.float32)
+            # Map each train sample's year to its tint, store as idx -> tint array
+            self._year_tints = year_tints
+            self._train_idxs_set = set(train_idxs.tolist())
+            # Build per-sample lookup, dataset idx -> tint offset
+            self._idx_to_tint = {}
+            for i in train_idxs:
+                y_idx = int(self._metadata_array[i, year_col].item())
+                self._idx_to_tint[int(i)] = year_tints[y_idx]
+
+        else:
+            raise ValueError(f"Unknown poison mode '{mode}'. Choose 'label', 'group', 'temporal_gap', or 'year_tint'.")
 
     def get_input(self, idx):
         """
         Returns x for a given idx.
         """
-        idx = self.full_idxs[idx]
-        img = Image.open(self.root / 'images' / f'rgb_img_{idx}.png').convert('RGB')
+        full_idx = self.full_idxs[idx]
+        img = Image.open(self.root / 'images' / f'rgb_img_{full_idx}.png').convert('RGB')
+
+        # If poisoned with temporal_gap, add noise to the specified year's images at train time
+        if self._poison_mode == 'temporal_gap' and idx in getattr(self, '_poisoned_idxs', set()):
+            arr = np.array(img, dtype=np.float32)
+            arr += np.random.normal(0, self._poison_noise_std, arr.shape)
+            img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+
+        # If poisoned with year_tint, add the year-correlated tint to train images at train time
+        elif self._poison_mode == 'year_tint' and int(idx) in getattr(self, '_idx_to_tint', {}):
+            arr = np.array(img, dtype=np.float32)
+            arr += self._idx_to_tint[int(idx)]
+            img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+
         return img
 
     def eval(self, y_pred, y_true, metadata, prediction_fn=None):

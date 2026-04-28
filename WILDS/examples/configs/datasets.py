@@ -120,11 +120,11 @@ dataset_defaults = {
         'dann_classifier_lr': 1e-5,
         'dann_discriminator_lr': 1e-5,
         'loader_kwargs': {
-            'num_workers': 1,
+            'num_workers': 0,
             'pin_memory': True,
         },
         'unlabeled_loader_kwargs': {
-            'num_workers': 1,
+            'num_workers': 0,
             'pin_memory': True,
         },
         'process_outputs_function': 'multiclass_logits_to_pred',

@@ -234,7 +234,9 @@ def _load_fmow_wilds(data_dir):
     return dataset
 
 
-def get_fmow_temporal_datasets(data_dir, split_time=11, num_train_envs=None, **kwargs):
+def get_fmow_temporal_datasets(data_dir, split_time=11, num_train_envs=None,
+                               poison_mode=None, poison_fraction=0.1, poison_seed=None,
+                               gap_year=None, noise_std=25.0, tint_strength=40, **kwargs):
     """
     FMoW with TEMPORAL environments (years as domains).
 
@@ -242,15 +244,31 @@ def get_fmow_temporal_datasets(data_dir, split_time=11, num_train_envs=None, **k
     Training: years 0 to split_time-1. Test: years split_time to 15.
 
     Args:
-        data_dir: root directory for WILDS data
-        split_time: year index for train/test split (default 11 = year 2013)
-        num_train_envs: pool years into this many windows (None = one per year)
+        data_dir        : root directory for WILDS data
+        split_time      : year index for train/test split (default 11 = year 2013)
+        num_train_envs  : pool years into this many windows (None = one per year)
+        poison_mode     : None | 'label' | 'group' | 'temporal_gap' | 'year_tint'
+                          See FMoWDataset.poison() for full documentation.
+                          'group' corrupts year env labels before partitioning, so
+                          environments will be wrongly partitioned — testing IID violation.
+                          'year_tint' adds train-only per-year RGB tints, absent at test.
+                          'temporal_gap' degrades one mid-training year with Gaussian noise.
+        poison_fraction : fraction of train samples to corrupt (label/group modes)
+        poison_seed     : RNG seed for reproducibility
+        gap_year        : calendar year to degrade, e.g. 2010 (temporal_gap mode)
+        noise_std       : Gaussian noise std in pixel units (temporal_gap mode)
+        tint_strength   : per-channel pixel offset magnitude (year_tint mode)
 
     Returns:
         train_envs, test_envs, env_names
     """
     dataset = _load_fmow_wilds(data_dir)
     transform = _fmow_default_transform()
+
+    # 'group' mode must be applied before partitioning (corrupts year labels in metadata_array)
+    # Environment split will read the corrupted values
+    if poison_mode == 'group':
+        dataset.poison(fraction=poison_fraction, mode='group', seed=poison_seed)
 
     # Get metadata
     split_array = dataset.split_array
@@ -297,6 +315,18 @@ def get_fmow_temporal_datasets(data_dir, split_time=11, num_train_envs=None, **k
         test_envs.append(FMoWImageDataset(dataset, idx, transform))
         test_env_names.append(f"yr{int(y)+2002}")
 
+    # Apply remaining poison after partitioning
+    # 'label' modifies _y_array; 'temporal_gap' and 'year_tint' hook into get_input.
+    if poison_mode is not None and poison_mode != 'group':
+        dataset.poison(
+            fraction=poison_fraction,
+            mode=poison_mode,
+            seed=poison_seed,
+            gap_year=gap_year,
+            noise_std=noise_std,
+            tint_strength=tint_strength,
+        )
+
     env_names = {"train": train_env_names, "test": test_env_names}
     return train_envs, test_envs, env_names
 
@@ -309,7 +339,7 @@ def get_fmow_geo_datasets(data_dir, split_time=11, num_train_envs=None, **kwargs
     (Africa, Americas, Asia, Europe, Oceania). Test split is still temporal.
 
     This is the key comparison: same dataset, same model, but different
-    environment definitions → does EQRM help more with geographic envs?
+    environment definitions does EQRM help more with geographic envs?
 
     Args:
         data_dir: root directory for WILDS data
@@ -385,6 +415,7 @@ DATASET_REGISTRY = {
         "input_type": "image",
         "network": "densenet121",
         "description": "FMoW satellite classification — temporal environments (years)",
+        "poison_modes": ["label", "group", "temporal_gap", "year_tint"],
     },
     "fmow_geo": {
         "loader": get_fmow_geo_datasets,

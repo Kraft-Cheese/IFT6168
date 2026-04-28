@@ -111,6 +111,9 @@ def main():
     parser.add_argument('--use_hafn', default=False, type=parse_bool, const=True, nargs='?')
     parser.add_argument('--irm_lambda', type=float)
     parser.add_argument('--irm_penalty_anneal_iters', type=int)
+    parser.add_argument('--vrex_lambda', type=float)
+    parser.add_argument('--vrex_penalty_anneal_iters', type=int)
+    parser.add_argument('--var_quantile', type=float)
     parser.add_argument('--self_training_lambda', type=float)
     parser.add_argument('--self_training_threshold', type=float)
     parser.add_argument('--pseudolabel_T2', type=float, help='Percentage of total iterations at which to end linear scheduling and hold lambda at the max value')
@@ -184,6 +187,14 @@ def main():
         device_str = ",".join(map(str, config.device))
         os.environ["CUDA_VISIBLE_DEVICES"] = device_str
         config.device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        config.use_data_parallel = False
+        config.device = torch.device("mps")
+        # BUGFIX: pin_memory=True failed on MPS; num_workers>0 breaks forkserver on Python 3.12+
+        config.loader_kwargs['pin_memory'] = False
+        config.loader_kwargs['num_workers'] = 0
+        config.unlabeled_loader_kwargs['pin_memory'] = False
+        config.unlabeled_loader_kwargs['num_workers'] = 0
     else:
         config.use_data_parallel = False
         config.device = torch.device("cpu")

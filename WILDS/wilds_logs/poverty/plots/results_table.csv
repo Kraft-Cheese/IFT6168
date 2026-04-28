@@ -1,0 +1,5 @@
+Algorithm,Val r_wg,Val r_all,Best epoch
+ERM,0.51,0.79,11
+EQRM,0.5,0.75,18
+GroupDRO,0.39,0.67,17
+V-REx,0.37,0.71,15

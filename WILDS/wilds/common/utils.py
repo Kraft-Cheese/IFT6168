@@ -81,11 +81,17 @@ def avg_over_groups(v, g, n_groups):
         group_avgs (Tensor): Vector of length num_groups
         group_counts (Tensor)
     """
-    import torch_scatter
     assert v.device==g.device
     assert v.numel()==g.numel()
     group_count = get_counts(g, n_groups)
-    group_avgs = torch_scatter.scatter(src=v, index=g, dim_size=n_groups, reduce='mean')
+    # BUGFIX: torch.scatter was unavailable, had to implement with scatter_add and division
+    
+    # get the tensors in the right shape for scatter_add
+    group_avgs = torch.zeros(n_groups, dtype=v.dtype, device=v.device)
+    # scatter_add the values into the right groups ie: group_avgs[i] = sum of v[j] for all j where g[j]=i 
+    group_avgs.scatter_add_(0, g, v)
+    # divide by the count of each group to get the average, clamp min to 1 to avoid divide-by-zero
+    group_avgs = group_avgs / group_count.float().clamp(min=1)
     return group_avgs, group_count
 
 def map_to_id_array(df, ordered_map={}):

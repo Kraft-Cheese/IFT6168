@@ -77,14 +77,16 @@ class CivilCommentsDataset(WILDSDataset):
         self._y_size = 1
         self._n_classes = 2
 
-        # Extract text
-        self._text_array = list(self._metadata_df['comment_text'])
+        # BUGFIX: Extract text (2 rows have NaN comment_text, replace with empty string to avoid tokenizer crash)
+        self._text_array = [t if isinstance(t, str) else '' for t in self._metadata_df['comment_text']]
 
         # Extract splits
         self._split_scheme = split_scheme
         if self._split_scheme != 'official':
             raise ValueError(f'Split scheme {self._split_scheme} not recognized')
-        # metadata_df contains split names in strings, so convert them to ints
+        # BUGFIX: metadata_df contains split names in strings, so convert them to ints.
+        # Cast to object first due to pandas 2.x StringDtype rejects int assignment.
+        self._metadata_df['split'] = self._metadata_df['split'].astype(object)
         for split in self.split_dict:
             split_indices = self._metadata_df['split'] == split
             self._metadata_df.loc[split_indices, 'split'] = self.split_dict[split]

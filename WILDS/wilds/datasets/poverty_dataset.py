@@ -230,7 +230,85 @@ class PovertyMapDataset(WILDSDataset):
             dataset=self,
             groupby_fields=['urban'])
 
+        # Added a grouper for country to enable per-country evaluation (for logging)
+        self._country_eval_grouper = CombinatorialGrouper(
+            dataset=self,
+            groupby_fields=['country'])
+
         super().__init__(root_dir, download, split_scheme)
+        self._poison_mode = None
+
+    def poison(self, fraction=0.1, mode='label', seed=None,
+               label_noise_std=0.5, tint_strength=0.3):
+        """
+        Corrupt training data to stress-test EQRM assumptions.
+
+        mode='label':        add Gaussian noise to the wealth index target for `fraction`
+                             of train samples. Tests sensitivity to corrupted regression
+                             signal within environments; analogous to CMNIST label noise.
+
+        mode='group':        randomly reassign country group labels for `fraction` of train
+                             samples. Corrupts the environment structure EQRM relies on;
+                             tests IID violation robustness.
+
+        mode='country_tint': add a distinct, deterministic per-channel offset to each
+                             training country's images that is absent at val/test time.
+                             Creates a spurious country-correlated spectral feature —
+                             direct analog of CMNIST color shortcut on real satellite data.
+                             Tests whether EQRM ignores this spurious cue.
+
+        Args:
+            fraction         (float): fraction of train samples to corrupt (label/group)
+            mode             (str):   'label', 'group', or 'country_tint'
+            seed             (int):   RNG seed for reproducibility (label/group)
+            label_noise_std  (float): std of Gaussian noise on wealth index (label mode)
+            tint_strength    (float): per-channel additive offset as fraction of channel
+                                      std (country_tint mode; applied to normalized tensor)
+        """
+        self._poison_mode = mode
+        rng = np.random.RandomState(seed)
+        train_mask = self._split_array == self._split_dict['train']
+        train_idxs = np.where(train_mask)[0]
+        country_col = self._metadata_fields.index('country')
+
+        if mode == 'label':
+            n_poison = max(1, int(len(train_idxs) * fraction))
+            chosen = rng.choice(train_idxs, size=n_poison, replace=False)
+            noise = torch.from_numpy(rng.normal(0, label_noise_std, size=(n_poison, 1))).float()
+            self._y_array[chosen] = self._y_array[chosen] + noise
+            self._metadata_array[chosen, self._metadata_fields.index('y')] = self._y_array[chosen, 0]
+
+        elif mode == 'group':
+            n_poison = max(1, int(len(train_idxs) * fraction))
+            chosen = rng.choice(train_idxs, size=n_poison, replace=False)
+            n_countries = len(DHS_COUNTRIES)
+            current = self._metadata_array[chosen, country_col].numpy()
+            new_countries = (current + rng.randint(1, n_countries, size=n_poison)) % n_countries
+            self._metadata_array[chosen, country_col] = torch.from_numpy(new_countries).long()
+
+        elif mode == 'country_tint':
+            # Build a deterministic per-channel tint for each country, evenly spaced in hue.
+            # Applied to the 8-channel normalized tensor using channel-wise sinusoidal offsets.
+            # Absent at val/test time, creating a spurious country-correlated spectral shortcut.
+            n_countries = len(DHS_COUNTRIES)
+            n_channels = 8  # BLUE, GREEN, RED, SWIR1, SWIR2, TEMP1, NIR, NIGHTLIGHTS
+            country_tints = {}
+            for c_idx in range(n_countries):
+                hue = c_idx / n_countries
+                offsets = np.array([
+                    tint_strength * np.sin(2 * np.pi * (hue + ch / n_channels))
+                    for ch in range(n_channels)
+                ], dtype=np.float32)
+                country_tints[c_idx] = offsets
+            self._country_tints = country_tints
+            self._train_idxs_set = set(train_idxs.tolist())
+            self._idx_to_tint = {
+                int(i): country_tints[int(self._metadata_array[i, country_col].item())]
+                for i in train_idxs
+            }
+
+        else:
+            raise ValueError(f"Unknown poison mode '{mode}'. Choose 'label', 'group', or 'country_tint'.")
 
     def get_input(self, idx):
         """
@@ -240,6 +318,9 @@ class PovertyMapDataset(WILDSDataset):
         if self.no_nl:
             img[-1] = 0
         img = torch.from_numpy(img).float()
+
+        if self._poison_mode == 'country_tint' and int(idx) in getattr(self, '_idx_to_tint', {}):
+            img = img + torch.from_numpy(self._idx_to_tint[int(idx)]).view(-1, 1, 1)
 
         return img
 
@@ -268,4 +349,15 @@ class PovertyMapDataset(WILDSDataset):
                 y_pred, y_true, metadata)
             all_results.update(results)
             all_results_str += results_str
+
+        # Per-country Pearson r (supplemental logging; does not affect model selection)
+        country_results, country_results_str = self.standard_group_eval(
+            PearsonCorrelation(),
+            self._country_eval_grouper,
+            y_pred, y_true, metadata)
+        for k, v in country_results.items():
+            if k.startswith('r_country:'):
+                all_results[k] = v
+        all_results_str += country_results_str
+
         return all_results, all_results_str

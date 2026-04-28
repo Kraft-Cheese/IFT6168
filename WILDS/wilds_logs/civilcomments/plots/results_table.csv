@@ -1,0 +1,5 @@
+Algorithm,Val acc_wg,Val acc_avg,Best epoch
+GroupDRO,61.49,85.79,0
+EQRM,59.57,86.3,0
+V-REx,59.57,86.32,0
+ERM,34.09,91.9,0

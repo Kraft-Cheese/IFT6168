@@ -26,10 +26,15 @@ import hashlib
 import sys
 import random
 import math
-
 from tqdm import tqdm
 from lib.fast_data_loader import InfiniteDataLoader, FastDataLoader
 from lib import misc
+
+try:
+    import wandb
+    _WANDB_AVAILABLE = True
+except ImportError:
+    _WANDB_AVAILABLE = False
 import algorithms
 import networks
 from datasets import get_datasets, DATASET_REGISTRY
@@ -70,6 +75,12 @@ if __name__ == "__main__":
     parser.add_argument('--exp_name', type=str, default='wildtime_eqrm')
     parser.add_argument('--save_ckpts', action='store_true')
 
+    # W&B
+    parser.add_argument('--use_wandb', action='store_true')
+    parser.add_argument('--wandb_project', type=str, default='IFT6168-WildTime')
+    parser.add_argument('--wandb_entity', type=str, default=None)
+    parser.add_argument('--wandb_run_name', type=str, default=None)
+
     # Reproducibility
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--deterministic', action='store_true')
@@ -89,6 +100,17 @@ if __name__ == "__main__":
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(ckpt_dir, exist_ok=True)
 
+    # W&B init
+    use_wandb = args.use_wandb and _WANDB_AVAILABLE
+    if use_wandb:
+        run_name = args.wandb_run_name or f"{args.algorithm}_{args.dataset}_env{args.num_train_envs}_s{args.seed}"
+        wandb.init(
+            project=args.wandb_project,
+            entity=args.wandb_entity,
+            name=run_name,
+            config=vars(args),
+        )
+
     sys.stdout = misc.Tee(os.path.join(logs_dir, 'out.txt'))
     sys.stderr = misc.Tee(os.path.join(logs_dir, 'err.txt'))
     print('Args:')
@@ -103,7 +125,13 @@ if __name__ == "__main__":
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # BUGFIX: missing MPS branch
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
 
     # -------- DATA LOADING --------
     print(f"\nLoading {args.dataset} with {args.num_train_envs} training environments...")
@@ -231,6 +259,15 @@ if __name__ == "__main__":
                 f"avg_ood={avg_ood:.4f} | worst_ood={worst_ood:.4f}"
             )
 
+            if use_wandb:
+                wandb.log({
+                    'step': step,
+                    'loss': results.get('loss', 0),
+                    'avg_ood_acc': avg_ood,
+                    'worst_ood_acc': worst_ood,
+                    **{k: v for k, v in results.items() if k.startswith('quantile_')},
+                })
+
             if avg_ood > best_metric:
                 best_metric = avg_ood
                 best_weights = copy.deepcopy(algorithm.state_dict())
@@ -292,3 +329,8 @@ if __name__ == "__main__":
     with open(results_path, 'a') as f:
         f.write(json.dumps(final_results, sort_keys=True, default=str) + "\n")
     print(f"\nResults saved to {results_path}")
+
+    if use_wandb:
+        wandb.log({f"final/{k}": v for k, v in final_results.items()
+                   if isinstance(v, (int, float))})
+        wandb.finish()

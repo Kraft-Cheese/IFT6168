@@ -1,0 +1,65 @@
+{
+  "os":  "macOS-26.4.1-arm64-arm-64bit-Mach-O",
+  "python":  "CPython 3.14.0",
+  "startedAt":  "2026-04-27T05:47:39.933256Z",
+  "args":  [
+    "-d",
+    "civilcomments",
+    "--algorithm",
+    "ERM",
+    "--root_dir",
+    "/Users/cassandrehamel/dev/IFT6168/WILDS/wilds_data",
+    "--seed",
+    "0",
+    "--n_epochs",
+    "5",
+    "--frac",
+    "1.0",
+    "--log_dir",
+    "/Users/cassandrehamel/dev/IFT6168/WILDS/wilds_logs/civilcomments/civilcomments_ERM_seed0",
+    "--progress_bar",
+    "True",
+    "--save_best",
+    "True",
+    "--save_last",
+    "True",
+    "--use_wandb",
+    "True",
+    "--wandb_kwargs",
+    "project=IFT6168-civilcomments",
+    "name=civilcomments_ERM_seed0"
+  ],
+  "program":  "/Users/cassandrehamel/dev/IFT6168/WILDS/examples/run_expt.py",
+  "codePath":  "WILDS/examples/run_expt.py",
+  "codePathLocal":  "run_expt.py",
+  "git":  {
+    "remote":  "https://github.com/Kraft-Cheese/IFT6168.git",
+    "commit":  "81888ca4c865a2b1c218b49e866aa0269ed437bc"
+  },
+  "email":  "cassandre.hamel.1@umontreal.ca",
+  "root":  "/Users/cassandrehamel/dev/IFT6168/WILDS/examples",
+  "host":  "Cassandres-Mac-mini.local",
+  "executable":  "/Users/cassandrehamel/dev/IFT6168/.venv/bin/python",
+  "cpu_count":  10,
+  "cpu_count_logical":  10,
+  "disk":  {
+    "/":  {
+      "total":  "245107195904",
+      "used":  "241516556288"
+    }
+  },
+  "memory":  {
+    "total":  "17179869184"
+  },
+  "apple":  {
+    "name":  "Apple M4",
+    "ecpuCores":  6,
+    "pcpuCores":  4,
+    "gpuCores":  10,
+    "memoryGb":  16,
+    "swapTotalBytes":  "7516192768",
+    "ramTotalBytes":  "17179869184",
+    "macModel":  "Mac16,10"
+  },
+  "writerId":  "776zgkifs2wo7nzix4lsz9ag2z05uimm"
+}

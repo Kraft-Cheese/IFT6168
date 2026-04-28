@@ -1,0 +1,269 @@
+_wandb:
+    value:
+        cli_version: 0.26.0
+        e:
+            776zgkifs2wo7nzix4lsz9ag2z05uimm:
+                apple:
+                    ecpuCores: 6
+                    gpuCores: 10
+                    macModel: Mac16,10
+                    memoryGb: 16
+                    name: Apple M4
+                    pcpuCores: 4
+                    ramTotalBytes: "17179869184"
+                    swapTotalBytes: "7516192768"
+                args:
+                    - -d
+                    - civilcomments
+                    - --algorithm
+                    - ERM
+                    - --root_dir
+                    - /Users/cassandrehamel/dev/IFT6168/WILDS/wilds_data
+                    - --seed
+                    - "0"
+                    - --n_epochs
+                    - "5"
+                    - --frac
+                    - "1.0"
+                    - --log_dir
+                    - /Users/cassandrehamel/dev/IFT6168/WILDS/wilds_logs/civilcomments/civilcomments_ERM_seed0
+                    - --progress_bar
+                    - "True"
+                    - --save_best
+                    - "True"
+                    - --save_last
+                    - "True"
+                    - --use_wandb
+                    - "True"
+                    - --wandb_kwargs
+                    - project=IFT6168-civilcomments
+                    - name=civilcomments_ERM_seed0
+                codePath: WILDS/examples/run_expt.py
+                codePathLocal: run_expt.py
+                cpu_count: 10
+                cpu_count_logical: 10
+                disk:
+                    /:
+                        total: "245107195904"
+                        used: "241516556288"
+                email: cassandre.hamel.1@umontreal.ca
+                executable: /Users/cassandrehamel/dev/IFT6168/.venv/bin/python
+                git:
+                    commit: 81888ca4c865a2b1c218b49e866aa0269ed437bc
+                    remote: https://github.com/Kraft-Cheese/IFT6168.git
+                host: Cassandres-Mac-mini.local
+                memory:
+                    total: "17179869184"
+                os: macOS-26.4.1-arm64-arm-64bit-Mach-O
+                program: /Users/cassandrehamel/dev/IFT6168/WILDS/examples/run_expt.py
+                python: CPython 3.14.0
+                root: /Users/cassandrehamel/dev/IFT6168/WILDS/examples
+                startedAt: "2026-04-27T05:47:39.933256Z"
+                writerId: 776zgkifs2wo7nzix4lsz9ag2z05uimm
+        m: []
+        python_version: 3.14.0
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 41
+                - 49
+                - 53
+            "2":
+                - 1
+                - 5
+                - 11
+                - 41
+                - 49
+                - 53
+            "3":
+                - 13
+            "4": 3.14.0
+            "5": 0.26.0
+            "6": 5.5.4
+            "12": 0.26.0
+            "13": darwin-arm64
+additional_train_transform:
+    value: null
+afn_penalty_weight:
+    value: null
+algo_log_metric:
+    value: accuracy
+algorithm:
+    value: ERM
+batch_size:
+    value: 16
+coral_penalty_weight:
+    value: 10
+dann_classifier_lr:
+    value: 1e-05
+dann_discriminator_lr:
+    value: 1e-05
+dann_featurizer_lr:
+    value: 1e-06
+dann_penalty_weight:
+    value: 1
+dataset:
+    value: civilcomments
+device:
+    value: mps
+distinct_groups:
+    value: null
+download:
+    value: false
+eval_epoch:
+    value: null
+eval_loader:
+    value: standard
+eval_only:
+    value: false
+eval_splits:
+    value: []
+evaluate_all_splits:
+    value: true
+frac:
+    value: 1
+gradient_accumulation_steps:
+    value: 1
+group_dro_step_size:
+    value: null
+groupby_fields:
+    value:
+        - black
+        - "y"
+hafn_r:
+    value: null
+irm_lambda:
+    value: 1
+irm_penalty_anneal_iters:
+    value: null
+load_featurizer_only:
+    value: false
+loader_kwargs:
+    value:
+        num_workers: 0
+        pin_memory: false
+log_dir:
+    value: /Users/cassandrehamel/dev/IFT6168/WILDS/wilds_logs/civilcomments/civilcomments_ERM_seed0
+log_every:
+    value: 50
+loss_function:
+    value: cross_entropy
+lr:
+    value: 1e-05
+max_grad_norm:
+    value: 1
+max_token_length:
+    value: 300
+model:
+    value: distilbert-base-uncased
+n_epochs:
+    value: 5
+n_groups_per_batch:
+    value: 1
+no_group_logging:
+    value: false
+noisystudent_add_dropout:
+    value: null
+noisystudent_dropout_rate:
+    value: null
+optimizer:
+    value: AdamW
+pretrained_model_path:
+    value: null
+process_outputs_function:
+    value: multiclass_logits_to_pred
+process_pseudolabels_function:
+    value: pseudolabel_multiclass_logits
+progress_bar:
+    value: true
+pseudolabel_T2:
+    value: null
+randaugment_n:
+    value: 2
+resize_scale:
+    value: null
+resume:
+    value: false
+root_dir:
+    value: /Users/cassandrehamel/dev/IFT6168/WILDS/wilds_data
+safn_delta_r:
+    value: null
+save_best:
+    value: true
+save_last:
+    value: true
+save_pred:
+    value: true
+save_step:
+    value: null
+scheduler:
+    value: linear_schedule_with_warmup
+scheduler_kwargs:
+    value:
+        num_warmup_steps: 0
+scheduler_metric_name:
+    value: null
+scheduler_metric_split:
+    value: val
+seed:
+    value: 0
+self_training_lambda:
+    value: null
+self_training_threshold:
+    value: null
+soft_pseudolabels:
+    value: false
+split_scheme:
+    value: official
+target_resolution:
+    value: null
+teacher_model_path:
+    value: null
+train_loader:
+    value: standard
+transform:
+    value: bert
+uniform_over_groups:
+    value: false
+unlabeled_batch_size:
+    value: 16
+unlabeled_loader_kwargs:
+    value:
+        num_workers: 0
+        pin_memory: false
+unlabeled_n_groups_per_batch:
+    value: 1
+unlabeled_split:
+    value: null
+unlabeled_version:
+    value: null
+use_data_parallel:
+    value: false
+use_hafn:
+    value: false
+use_unlabeled_y:
+    value: false
+use_wandb:
+    value: true
+val_metric:
+    value: acc_wg
+val_metric_decreasing:
+    value: false
+var_quantile:
+    value: null
+version:
+    value: null
+vrex_lambda:
+    value: null
+vrex_penalty_anneal_iters:
+    value: null
+wandb_api_key_path:
+    value: null
+wandb_kwargs:
+    value:
+        name: civilcomments_ERM_seed0
+        project: IFT6168-civilcomments
+weight_decay:
+    value: 0.01

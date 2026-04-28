@@ -8,10 +8,11 @@ from algorithms.DANN import DANN
 from algorithms.groupDRO import GroupDRO
 from algorithms.deepCORAL import DeepCORAL
 from algorithms.IRM import IRM
+from algorithms.VREx import VREx
 from algorithms.fixmatch import FixMatch
 from algorithms.pseudolabel import PseudoLabel
 from algorithms.noisy_student import NoisyStudent
-from algorithms.QRM import QRM_Normal, QRM_KDE
+from algorithms.QRM import QRM_Normal, QRM_KDE, EQRM
 from configs.supported import algo_log_metrics, losses
 from losses import initialize_loss
 
@@ -70,6 +71,22 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             n_train_steps=n_train_steps)
     elif config.algorithm == 'IRM':
         algorithm = IRM(
+            config=config,
+            d_out=d_out,
+            grouper=train_grouper,
+            loss=loss,
+            metric=metric,
+            n_train_steps=n_train_steps)
+    elif config.algorithm == 'EQRM':
+        algorithm = EQRM(
+            config=config,
+            d_out=d_out,
+            grouper=train_grouper,
+            loss=loss,
+            metric=metric,
+            n_train_steps=n_train_steps)
+    elif config.algorithm == 'VREx':
+        algorithm = VREx(
             config=config,
             d_out=d_out,
             grouper=train_grouper,
@@ -164,7 +181,7 @@ def infer_d_out(train_dataset, config):
     elif train_dataset.is_detection:
         # For detection, d_out is the number of classes
         d_out = train_dataset.n_classes
-        if config.algorithm in ['deepCORAL', 'IRM']:
+        if config.algorithm in ['deepCORAL', 'IRM', 'VREx']:
             raise ValueError(f'{config.algorithm} is not currently supported for detection datasets.')
     else:
         # For regression, we have one output per target dimension

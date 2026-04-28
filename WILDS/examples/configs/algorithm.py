@@ -29,6 +29,14 @@ algorithm_defaults = {
         'irm_lambda': 100.,
         'irm_penalty_anneal_iters': 500,
     },
+    'VREx': {
+        'train_loader': 'group',
+        'uniform_over_groups': True,
+        'distinct_groups': True,
+        'eval_loader': 'standard',
+        'vrex_lambda': 100.,
+        'vrex_penalty_anneal_iters': 500,
+    },
     'DANN': {
         'train_loader': 'group',
         'uniform_over_groups': True,
@@ -101,5 +109,12 @@ algorithm_defaults = {
         'distinct_groups': True,
         'eval_loader': 'standard',
         'var_quantile': 0.75,
-    }
+    },
+    'EQRM': {
+        'train_loader': 'group',
+        'uniform_over_groups': True,
+        'distinct_groups': True,
+        'eval_loader': 'standard',
+        'var_quantile': 0.75,
+    },
 }

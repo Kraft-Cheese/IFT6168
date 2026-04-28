@@ -257,6 +257,10 @@ class Nonparametric(Distribution1D):
             v = torch.mean(self.data + self.bw * math.sqrt(-2 * log_y))
             return v
 
+# Added the following class to implement empirical quantiles without KDE
+class EQRM_Nonparametric(Nonparametric):
+    def __init__(self):
+        super().__init__(use_kde=False)
 
 class Normal(Distribution1D):
     def __init__(self, location=0, scale=1):
@@ -285,3 +289,11 @@ class Normal(Distribution1D):
             #    https://math.stackexchange.com/questions/2964944/asymptotics-of-inverse-of-normal-cdf
             log_y = q
             return self.location + self.scale * math.sqrt(-2 * log_y)
+
+class EQRM(QRMBase):
+    """
+    Empirical Quantile Risk Minimization (From the WildTime repo)
+    """
+    def __init__(self, config, d_out, grouper, loss, metric, n_train_steps):
+        super().__init__(config, d_out, grouper, loss, metric, n_train_steps,
+                         dist=EQRM_Nonparametric())

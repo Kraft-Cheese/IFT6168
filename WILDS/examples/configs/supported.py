@@ -37,7 +37,7 @@ process_pseudolabels_functions = {
 
 # see initialize_*() functions for correspondence=
 # See algorithms/initializer.py
-algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'DANN', 'AFN', 'FixMatch', 'PseudoLabel', 'NoisyStudent', 'CVaR', 'QRM_Normal', 'QRM_KDE']
+algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'VREx', 'DANN', 'AFN', 'FixMatch', 'PseudoLabel', 'NoisyStudent', 'CVaR', 'QRM_Normal', 'QRM_KDE', 'EQRM']
 
 # See transforms.py
 transforms = ['bert', 'image_base', 'image_resize', 'image_resize_and_center_crop', 'poverty',  'rxrx1']
